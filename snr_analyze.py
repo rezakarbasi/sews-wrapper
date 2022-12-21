@@ -3,9 +3,9 @@ import rasterio as rio
 from rasterio.transform import Affine
 import json
 import requests
-import time
+import random
 import urllib.parse
-
+with open('./0-5m-above_the_ground.json') as json_file: tiff_test = json.load(json_file)
 
 base_url = 'http://127.0.0.1:8080'
 headers = {
@@ -34,11 +34,12 @@ def create_radar(radar_params):
     return radar_id
 
 
-def get_radar_analyses(radar_id, analyses_params):
-    url = f'{base_url}/api/RadarSNR/RadarSNRAnalysis?id={radar_id}'
-    payload = urllib.parse.urlencode(analyses_params)
-    response = requests.request('POST', url, headers=headers, data=payload)
-    return json.loads(response.text)
+# def get_radar_analyses(radar_id, analyses_params):
+def get_radar_analyses():
+    # url = f'{base_url}/api/RadarSNR/RadarSNRAnalysis?id={radar_id}'
+    # payload = urllib.parse.urlencode(analyses_params)
+    # response = requests.request('POST', url, headers=headers, data=payload)
+    return tiff_test
 
 
 def create_tiff(radar_analyses, min_latitude, radar_index):
@@ -59,8 +60,10 @@ def create_tiff(radar_analyses, min_latitude, radar_index):
     y_min, y_max = df_h1['Y'].min(), df_h1['Y'].max()
     x_size, y_size = snr_grid.shape
 
-    x_res = (x_max - x_min) / x_size
-    y_res = (y_max - y_min) / y_size
+    # x_res = (x_max - x_min) / x_size
+    x_res = (x_max - x_min) / random.randint(1, 1000)
+    # y_res = (y_max - y_min) / y_size
+    y_res = (y_max - y_min) / random.randint(1, 1000)
     transform = Affine.translation(x_min - x_res / 2, y_max - y_res / 2) * Affine.scale(x_res, y_res)
     # print(transform)
 
@@ -82,72 +85,72 @@ def create_tiff(radar_analyses, min_latitude, radar_index):
     new_dataset.close()
     return tiff_path
 
-if __name__ == '__main__':
-    access_token = get_access_token(username='war', password='1')
-    # set bearer token
-    headers['Authorization'] = f'Bearer {access_token}'
+# if __name__ == '__main__':
+#     access_token = get_access_token(username='war', password='1')
+#     # set bearer token
+#     headers['Authorization'] = f'Bearer {access_token}'
 
 
-    time.sleep(10)
+#     time.sleep(10)
 
-    radar_params = {
-        'Power': 30_000,
-        'Frequency': 2_500_000_000,
-        'Bandwidth': 1_000_000,
-        'ReceiverGain': 45,
-        'ReceiverLoss': 0,
-        'TransmitterLoss': 0,
-        'NoiseFigure': 3,
-        'IntegratedPulseNumber': 20,
-        'Polarization': 0,
-        'ProcessingGain': 40,
-        'PRF': 1_000,
-        'NormalRange': 150_000,
-        'RFTemp': 290,
-        'RFLoss': 0,
-        'TotalCell': 1_000,
-        'Gpc': 0,
-        'ReceiverType': 0,
-        'Amplitude': 0,
-        'VxScaleFactor': 1,
-        'VyScaleFactor': 1,
-        'Cfar': 'true',
-        'CfarType': 0,
-        'M': 20,
-        'Ng': 0,
-        'PFalseAlarm': 0.000_01,
-        'CFAROrder': 1,
-        'Threshold': 0.000_37,
-    }
-    radar_id = create_radar(radar_params)
+#     radar_params = {
+#         'Power': 30_000,
+#         'Frequency': 2_500_000_000,
+#         'Bandwidth': 1_000_000,
+#         'ReceiverGain': 45,
+#         'ReceiverLoss': 0,
+#         'TransmitterLoss': 0,
+#         'NoiseFigure': 3,
+#         'IntegratedPulseNumber': 20,
+#         'Polarization': 0,
+#         'ProcessingGain': 40,
+#         'PRF': 1_000,
+#         'NormalRange': 150_000,
+#         'RFTemp': 290,
+#         'RFLoss': 0,
+#         'TotalCell': 1_000,
+#         'Gpc': 0,
+#         'ReceiverType': 0,
+#         'Amplitude': 0,
+#         'VxScaleFactor': 1,
+#         'VyScaleFactor': 1,
+#         'Cfar': 'true',
+#         'CfarType': 0,
+#         'M': 20,
+#         'Ng': 0,
+#         'PFalseAlarm': 0.000_01,
+#         'CFAROrder': 1,
+#         'Threshold': 0.000_37,
+#     }
+#     radar_id = create_radar(radar_params)
 
-    time.sleep(5)
+#     time.sleep(5)
 
-    radars = [
-        {'city': "Bushehr", 'latitude': 28.876111, 'longitude': 50.852500, 'elevation': 534},
-        {'city': "Dezful", 'latitude': 32.514167, 'longitude': 48.418611, 'elevation': 197},
-        {'city': "Mashhad", 'latitude': 36.196944, 'longitude': 59.787778, 'elevation': 1015},
-        {'city': "Karaj", 'latitude': 35.791944, 'longitude': 51.085278, 'elevation': 2522},
-        {'city': "Anarak", 'latitude': 33.089722, 'longitude': 53.424444, 'elevation': 1061},
-        {'city': "Hashem Abad", 'latitude': 32.707500, 'longitude': 52.781667, 'elevation': 2661},
-    ]
-    for radar in radars:
+#     radars = [
+#         {'city': "Bushehr", 'latitude': 28.876111, 'longitude': 50.852500, 'elevation': 534},
+#         {'city': "Dezful", 'latitude': 32.514167, 'longitude': 48.418611, 'elevation': 197},
+#         {'city': "Mashhad", 'latitude': 36.196944, 'longitude': 59.787778, 'elevation': 1015},
+#         {'city': "Karaj", 'latitude': 35.791944, 'longitude': 51.085278, 'elevation': 2522},
+#         {'city': "Anarak", 'latitude': 33.089722, 'longitude': 53.424444, 'elevation': 1061},
+#         {'city': "Hashem Abad", 'latitude': 32.707500, 'longitude': 52.781667, 'elevation': 2661},
+#     ]
+#     for radar in radars:
 
-        analyses_params = {
-            'HorizontalStep': 10_000,
-            'VerticalStep': 100,
-            'RadarPosition_x': radar['longitude'],
-            'RadarPosition_y': radar['latitude'],
-            'RadarPosition_z': radar['elevation'],
-        }
+#         analyses_params = {
+#             'HorizontalStep': 10_000,
+#             'VerticalStep': 100,
+#             'RadarPosition_x': radar['longitude'],
+#             'RadarPosition_y': radar['latitude'],
+#             'RadarPosition_z': radar['elevation'],
+#         }
 
-        analyses_params['MinimumLat'] = analyses_params['RadarPosition_y'] - 2
-        analyses_params['MaximumLat'] = analyses_params['RadarPosition_y'] + 2
-        analyses_params['MinimumLong'] = analyses_params['RadarPosition_x'] - 2
-        analyses_params['MaximumLong'] = analyses_params['RadarPosition_x'] + 2
-        analyses_params['MinimumHeight'] = analyses_params['RadarPosition_z'] + 1200
-        analyses_params['MaximumHeight'] = analyses_params['RadarPosition_z'] + 1200
-        city = radar['city']
+#         analyses_params['MinimumLat'] = analyses_params['RadarPosition_y'] - 2
+#         analyses_params['MaximumLat'] = analyses_params['RadarPosition_y'] + 2
+#         analyses_params['MinimumLong'] = analyses_params['RadarPosition_x'] - 2
+#         analyses_params['MaximumLong'] = analyses_params['RadarPosition_x'] + 2
+#         analyses_params['MinimumHeight'] = analyses_params['RadarPosition_z'] + 1200
+#         analyses_params['MaximumHeight'] = analyses_params['RadarPosition_z'] + 1200
+#         city = radar['city']
 
-        radar_analyses = get_radar_analyses(radar_id, analyses_params)
-        create_tiff(radar_analyses, analyses_params['MinimumHeight'], city)
+#         radar_analyses = get_radar_analyses(radar_id, analyses_params)
+#         create_tiff(radar_analyses, analyses_params['MinimumHeight'], city)
