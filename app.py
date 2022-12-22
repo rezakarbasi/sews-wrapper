@@ -8,6 +8,10 @@ import json
 from snr_analyze import *
 
 
+# implement login settings in static mode
+# add direct point snr
+
+
 app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
@@ -28,72 +32,65 @@ def api_snr():
 @app.route("/analyze", methods=["GET"])
 @cross_origin()
 def geotiff_provider():
-    return send_file('./tiff/snr-0-5m.tif')
-    # geotiff_response = {}
-    # # print(request.data)
-    # radars = json.loads(request.data)
-    # # access_token = get_access_token()
-    # # time.sleep(10)
-    # # print(access_token)
-    # for radar in radars:
-    #     cfar = 'true' if radar['cfar'] == 1 else 'false'
-    #     radar_params = {
-    #         'Power': radar['power'],
-    #         'Frequency': radar['frequency'],
-    #         'Bandwidth': radar['bandwidth'],
-    #         'ReceiverGain': radar['receiver_gain'],
-    #         'ReceiverLoss': radar['receiver_loss'],
-    #         'TransmitterLoss': radar['transmitter_loss'],
-    #         'NoiseFigure': radar['noise_figure'],
-    #         'IntegratedPulseNumber': radar['integrated_pulse_number'],
-    #         'Polarization': radar['polarization'],
-    #         'ProcessingGain': radar['processing_gain'],
-    #         'PRF': radar['prf'],
-    #         'NormalRange': radar['normal_range'],
-    #         'RFTemp': radar['rf_temp'],
-    #         'RFLoss': radar['rf_loss'],
-    #         'TotalCell': radar['total_cell'],
-    #         'Gpc': radar['gpc'],
-    #         'ReceiverType': radar['receiver_type'],
-    #         'Amplitude': radar['amplitude'],
-    #         'VxScaleFactor': radar['vx_scale_factor'],
-    #         'VyScaleFactor': radar['vy_scale_factor'],
-    #         'Cfar': cfar,
-    #         'CfarType': radar['cfar_type'],
-    #         'M': radar['m'],
-    #         'Ng': radar['ng'],
-    #         'PFalseAlarm': radar['p_false_alarm'],
-    #         'CFAROrder': radar['cfar_order'],
-    #         'Threshold': radar['threshold'],
-    #     }
-    #     # radar_id = create_radar(radar_params)
-    #     # time.sleep(5)
+    # return send_file('./tiff/snr-0-5m.tif')
+    geotiff_response = {}
+    radars = json.loads(request.data)
+    for radar in radars:
+        cfar = 'true' if radar['cfar'] == 1 else 'false'
+        radar_params = {
+            'Power': radar['power'],
+            'Frequency': radar['frequency'],
+            'Bandwidth': radar['bandwidth'],
+            'ReceiverGain': radar['receiver_gain'],
+            'ReceiverLoss': radar['receiver_loss'],
+            'TransmitterLoss': radar['transmitter_loss'],
+            'NoiseFigure': radar['noise_figure'],
+            'IntegratedPulseNumber': radar['integrated_pulse_number'],
+            'Polarization': radar['polarization'],
+            'ProcessingGain': radar['processing_gain'],
+            'PRF': radar['prf'],
+            'NormalRange': radar['normal_range'],
+            'RFTemp': radar['rf_temp'],
+            'RFLoss': radar['rf_loss'],
+            'TotalCell': radar['total_cell'],
+            'Gpc': radar['gpc'],
+            'ReceiverType': radar['receiver_type'],
+            'Amplitude': radar['amplitude'],
+            'VxScaleFactor': radar['vx_scale_factor'],
+            'VyScaleFactor': radar['vy_scale_factor'],
+            'Cfar': cfar,
+            'CfarType': radar['cfar_type'],
+            'M': radar['m'],
+            'Ng': radar['ng'],
+            'PFalseAlarm': radar['p_false_alarm'],
+            'CFAROrder': radar['cfar_order'],
+            'Threshold': radar['threshold'],
+        }
+        radar_id = create_radar(radar_params)
+        # time.sleep(5)
 
-    #     analyses_params = {
-    #         'HorizontalStep': 10_000,
-    #         'VerticalStep': 500,
-    #         'RadarPosition_x': radar['lng'],
-    #         'RadarPosition_y': radar['lat'],
-    #         'RadarPosition_z': 2500,
-    #     }
+        analyses_params = {
+            'HorizontalStep': 10_000,
+            'VerticalStep': 500,
+            'RadarPosition_x': radar['lng'],
+            'RadarPosition_y': radar['lat'],
+            'RadarPosition_z': 2500,
+        }
 
-    #     analyses_params['MinimumLat'] = analyses_params['RadarPosition_y'] - 2
-    #     analyses_params['MaximumLat'] = analyses_params['RadarPosition_y'] + 2
-    #     analyses_params['MinimumLong'] = analyses_params['RadarPosition_x'] - 2
-    #     analyses_params['MaximumLong'] = analyses_params['RadarPosition_x'] + 2
-    #     analyses_params['MinimumHeight'] = analyses_params['RadarPosition_z'] + 500
-    #     analyses_params['MaximumHeight'] = analyses_params['RadarPosition_z'] + 500
+        analyses_params['MinimumLat'] = analyses_params['RadarPosition_y'] - 2
+        analyses_params['MaximumLat'] = analyses_params['RadarPosition_y'] + 2
+        analyses_params['MinimumLong'] = analyses_params['RadarPosition_x'] - 2
+        analyses_params['MaximumLong'] = analyses_params['RadarPosition_x'] + 2
+        analyses_params['MinimumHeight'] = analyses_params['RadarPosition_z'] + 500
+        analyses_params['MaximumHeight'] = analyses_params['RadarPosition_z'] + 500
         
-    #     radar_index = radar['radarIndex']
+        radar_index = radar['radarIndex']
 
-    #     # radar_analyses = get_radar_analyses(radar_index, analyses_params)
-    #     radar_analyses = get_radar_analyses()
-    #     # print(radar_analyses)
-    #     tiff_path = create_tiff(radar_analyses, analyses_params['MinimumHeight'], radar_index)
-    #     geotiff_response[radar_index] = tiff_path
-    #     print(tiff_path)
+        radar_analyses = get_radar_analyses(radar_index, analyses_params)
+        tiff_path = create_tiff(radar_analyses, analyses_params['MinimumHeight'], radar_index)
+        geotiff_response[radar_index] = tiff_path
 
-    # return geotiff_response
+    return geotiff_response
     # # snr_df = pd.read_json('0-5m-above_the_ground.json')
     # # snr_df = pd.DataFrame(snr_df.to_numpy().reshape(-1))
     # # df = pd.DataFrame.from_records(snr_df.explode(0).to_numpy().reshape(-1))
@@ -128,5 +125,6 @@ def geotiff_provider():
     # # new_dataset.write(grid, 1)
     # # new_dataset.close()
     # # return send_file('./tiff/snr-0-5m.tif')
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
