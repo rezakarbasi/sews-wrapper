@@ -2,7 +2,6 @@ import pandas as pd
 import rasterio as rio
 from rasterio.transform import Affine
 import json
-import random
 from client import PishgamanClient
 
 client = PishgamanClient()
@@ -15,9 +14,9 @@ def create_radar(radar_params):
 
 
 def get_radar_analyses(radar_id, analyses_params):
-    url = f'/api/RadarSNR/RadarSNRAnalysis?id={radar_id}'
-    response = client.post( url, data=analyses_params)
-    return json.loads(response.body)
+    url = f'/api/RadarSNR/RadarSNRAnalysis?id={2 or radar_id}'
+    response = client.post(url, data=analyses_params)
+    return json.loads(response.text)
 
 
 def create_tiff(radar_analyses, min_latitude, radar_index):
@@ -40,7 +39,7 @@ def create_tiff(radar_analyses, min_latitude, radar_index):
     y_res = (y_max - y_min) / y_size
     transform = Affine.translation(x_min - x_res / 2, y_max - y_res / 2) * Affine.scale(x_res, y_res)
 
-    tiff_path = f'./tiff/snr-radar{radar_index}.tif'
+    tiff_path = f'/static/tiff/snr-radar{radar_index}.tif'
 
     new_dataset = rio.open(
         tiff_path,
