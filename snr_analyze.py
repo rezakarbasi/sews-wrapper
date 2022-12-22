@@ -39,7 +39,7 @@ def create_tiff(radar_analyses, min_latitude, radar_index):
     y_res = (y_max - y_min) / y_size
     transform = Affine.translation(x_min - x_res / 2, y_max - y_res / 2) * Affine.scale(x_res, y_res)
 
-    tiff_path = f'/static/tiff/snr-radar{radar_index}.tif'
+    tiff_path = f'./tiff/snr-radar{radar_index}.tif'
 
     new_dataset = rio.open(
         tiff_path,
@@ -55,4 +55,4 @@ def create_tiff(radar_analyses, min_latitude, radar_index):
 
     new_dataset.write(snr_grid, 1)
     new_dataset.close()
-    return tiff_path
+    return f'/static/tiff/snr-radar{radar_index}.tif'
