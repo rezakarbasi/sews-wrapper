@@ -1,9 +1,4 @@
-from urllib import response
-import pandas as pd
-import rasterio as rio
-from rasterio.transform import Affine
-from flask import Flask, send_file, request
-from flask_cors import CORS, cross_origin
+from flask import Flask, request, send_from_directory
 import json
 from snr_analyze import *
 
@@ -13,12 +8,9 @@ from snr_analyze import *
 
 
 app = Flask(__name__)
-cors = CORS(app)
-app.config['CORS_HEADERS'] = 'Content-Type'
 
 
 @app.route("/api", methods=["POST"])
-# @cross_origin()
 def api_snr():
     radar_id = request.args.get('id')
     data = dict(request.form)
@@ -28,12 +20,9 @@ def api_snr():
     # return json_file
 
 
-# @app.route("/analyze", methods=["POST"])
-@app.route("/analyze", methods=["GET"])
-@cross_origin()
+@app.route("/analyze", methods=["POST"])
 def geotiff_provider():
-    # return send_file('./tiff/snr-0-5m.tif')
-    geotiff_response = {}
+    geotiff_response = []
     radars = json.loads(request.data)
     for radar in radars:
         cfar = 'true' if radar['cfar'] == 1 else 'false'
@@ -66,65 +55,84 @@ def geotiff_provider():
             'CFAROrder': radar['cfar_order'],
             'Threshold': radar['threshold'],
         }
+        radar_params = {
+            "Power":40000,
+            "Frequency":3000000000,
+            "Bandwidth":1000000,
+            "ReceiverGain":45,
+            "ReceiverLoss":0,
+            "TransmitterLoss":0,
+            "NoiseFigure":3,
+            "IntegratedPulseNumber":20,
+            "Polarization":0,
+            "ProcessingGain":40,
+            "PRF":1000,
+            "NormalRange":150000,
+            "RFTemp":320,
+            "RFLoss":0,
+            "TotalCell":1000,
+            "Gpc":0,
+            "ReceiverType":0,
+            "Amplitude":0,
+            "VxScaleFactor":1,
+            "VyScaleFactor":1,
+            "Cfar":"true",
+            "CfarType":0,
+            "M":20,
+            "Ng":0,
+            "PFalseAlarm":"0.00001",
+            "CFAROrder":1,
+            "Threshold":0.00037
+        }
         radar_id = create_radar(radar_params)
-        # time.sleep(5)
 
         analyses_params = {
-            'HorizontalStep': 10_000,
-            'VerticalStep': 500,
-            'RadarPosition_x': radar['lng'],
-            'RadarPosition_y': radar['lat'],
-            'RadarPosition_z': 2500,
+            'HorizontalStep': 1000,
+            'VerticalStep': 1000,
+            'RadarPosition_x': 57.1 or radar['lng'],
+            'RadarPosition_y': 26.4 or radar['lat'],
+            'RadarPosition_z': 3 or 2500,
         }
 
-        analyses_params['MinimumLat'] = analyses_params['RadarPosition_y'] - 2
-        analyses_params['MaximumLat'] = analyses_params['RadarPosition_y'] + 2
-        analyses_params['MinimumLong'] = analyses_params['RadarPosition_x'] - 2
-        analyses_params['MaximumLong'] = analyses_params['RadarPosition_x'] + 2
-        analyses_params['MinimumHeight'] = analyses_params['RadarPosition_z'] + 500
-        analyses_params['MaximumHeight'] = analyses_params['RadarPosition_z'] + 500
+        analyses_params['MinimumLat'] = 26.2 or analyses_params['RadarPosition_y'] - 2
+        analyses_params['MaximumLat'] = 26.6 or analyses_params['RadarPosition_y'] + 2
+        analyses_params['MinimumLong'] = 56.6 or analyses_params['RadarPosition_x'] - 2
+        analyses_params['MaximumLong'] = 57 or analyses_params['RadarPosition_x'] + 2
+        analyses_params['MinimumHeight'] = 5000 or analyses_params['RadarPosition_z'] + 500
+        analyses_params['MaximumHeight'] = 6000 or analyses_params['RadarPosition_z'] + 500
+
+        analyses_params = {
+            "MinimumLat": 26.2,
+            "MaximumLat":26.6,
+            "MinimumLong":56.6,
+            "MaximumLong":57,
+            "MinimumHeight":5000,
+            "MaximumHeight":6000,
+            "HorizontalStep":1000,
+            "VerticalStep":1000,
+            "RadarPosition_x":57.1,
+            "RadarPosition_y":26.4,
+            "RadarPosition_z":3,
+        }
         
         radar_index = radar['radarIndex']
 
-        radar_analyses = get_radar_analyses(radar_index, analyses_params)
+        radar_analyses = get_radar_analyses(radar_id, analyses_params)
+        print(radar_analyses)
         tiff_path = create_tiff(radar_analyses, analyses_params['MinimumHeight'], radar_index)
-        geotiff_response[radar_index] = tiff_path
+        geotiff_response.append({
+            "radar_index": radar_index,
+            "path": tiff_path
+
+        })
 
     return geotiff_response
-    # # snr_df = pd.read_json('0-5m-above_the_ground.json')
-    # # snr_df = pd.DataFrame(snr_df.to_numpy().reshape(-1))
-    # # df = pd.DataFrame.from_records(snr_df.explode(0).to_numpy().reshape(-1))
-    # # df = df.replace("-Infinity", df['SNR'].min() * 1.2)
-    # # df_h1 = df[df['Z'] == 883.0]
-    # # # df_h2 = df[df['Z'] == 888.0]
 
-    # # grid = df_h1['SNR'].to_numpy().reshape(df_h1['X'].unique().shape[0], df_h1['Y'].unique().shape[0])
-
-
-    # # x_min, x_max = df_h1['X'].min(), df_h1['X'].max()
-    # # y_min, y_max = df_h1['Y'].min(), df_h1['Y'].max()
-    # # x_size, y_size = grid.shape
-
-    # # x_res = (x_max - x_min) / x_size
-    # # y_res = (y_max - y_min) / y_size
-    # # transform = Affine.translation(x_min - x_res / 2, y_min - y_res / 2) * Affine.scale(x_res, y_res)
-    # # # print(transform)
-
-    # # new_dataset = rio.open(
-    # #     './tiff/snr-0-5m.tif',
-    # #     'w',
-    # #     driver='GTiff',
-    # #     height=grid.shape[0],
-    # #     width=grid.shape[1],
-    # #     count=2,
-    # #     dtype=grid.dtype,
-    # #     crs='+proj=latlong',
-    # #     transform=transform,
-    # # )
-
-    # # new_dataset.write(grid, 1)
-    # # new_dataset.close()
-    # # return send_file('./tiff/snr-0-5m.tif')
+@app.route('/static/tiff/<file>')
+def serve_file(file):
+    print(file)
+    # return []
+    return send_from_directory("tiff", file)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
