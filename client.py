@@ -2,17 +2,20 @@ import urllib.parse
 import requests
 import json
 import urllib.parse
-from http import client as cl
+import time
 
 base_url = 'http://127.0.0.1'
 port = "8080"
+
+_ = lambda url: f"{base_url}:{port}{url}"
+
 headers = {
     'Content-Type': 'application/x-www-form-urlencoded',
 }
 
 class PishgamanClient:
     instance = None
-    client = cl.HTTPConnection(base_url, port)
+    client = requests.Session()
 
     def __new__(cls, *args, **kwargs):
         if not cls.instance:
@@ -30,19 +33,18 @@ class PishgamanClient:
         if not self._token:
             try:
                 with open("token.txt") as f:
-                    self.token = f.readline()
+                    self._token = f.readline()
             except:
                 pass
         return self._token
 
     def _login(self):
-        url = f'{base_url}/token'
         payload = urllib.parse.urlencode({
             'username': self.username,
             'password': self.password,
             'grant_type': 'password',
         })
-        response = requests.post(url, headers=headers, data=payload)
+        response = requests.request("POST", _("/token"), headers=headers, data=payload)
         json_response = json.loads(response.text)
         self._token = json_response['access_token']
         with open("token.txt", "w") as f:
@@ -58,8 +60,10 @@ class PishgamanClient:
         }
 
     def post(self, url, data, headers={}):
-        payload = urllib.parse.urlencode(payload)
-        res = self.client.post(url, data=data, headers=self.wrap_auth_header(headers))
+        data = urllib.parse.urlencode(data)
+        print(data)
+        res = requests.request("POST", _(url), data=data, headers=self.wrap_auth_header(headers))
+        time.sleep(10)
         if res.status_code in [401, 403]:
             self._login()
             res = self.post(url, data, headers)
